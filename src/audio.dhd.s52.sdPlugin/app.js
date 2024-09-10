@@ -31,12 +31,12 @@ $SD.on("connected", (jsn) => {
  */
 const instanceRegistry = new Map();
 
-const actionOnOffUuid = "audio.dhd.rm1.btnonoff";
-const actionPflUuid = "audio.dhd.rm1.pflonoff";
+const actionOnOffUuid = "audio.dhd.s52.btnonoff";
+const actionPflUuid = "audio.dhd.s52.pflonoff";
 
-const actionHp1Uuid = "audio.dhd.rm1.hp1vol";
-const actionHp2Uuid = "audio.dhd.rm1.hp2vol";
-const actionOutUuid = "audio.dhd.rm1.outvol";
+const actionHp1Uuid = "audio.dhd.s52.hp1vol";
+const actionHp2Uuid = "audio.dhd.s52.hp2vol";
+const actionOutUuid = "audio.dhd.s52.outvol";
 
 function createActionInstances() {
   [
