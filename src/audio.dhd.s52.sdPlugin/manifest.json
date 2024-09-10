@@ -1,0 +1,86 @@
+{
+  "SDKVersion": 2,
+  "Author": "DHD audio GmbH",
+  "CodePath": "app.html",
+  "Description": "Control your DHD console with Stream Deck",
+  "Name": "DHD Stream Deck",
+  "Icon": "assets/manifest",
+  "URL": "https://dhd.audio/",
+  "Version": "1.0.0",
+  "Software": {
+    "MinimumVersion": "5.0"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "10.11"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Category": "DHD Control",
+  "CategoryIcon": "assets/manifest",
+  "Actions": [
+    {
+      "Icon": "actions/btnonoff/assets/On-inactive",
+      "Name": "Channel On / Off",
+      "Controllers": ["Keypad"],
+      "DisableAutomaticStates": true,
+      "States": [
+        {
+          "Image": "actions/btnonoff/assets/On-active",
+          "Name": "on"
+        },
+        {
+          "Image": "actions/btnonoff/assets/On-inactive",
+          "Name": "off"
+        }
+      ],
+      "Tooltip": "Switch Inputs On or Off",
+      "UUID": "audio.dhd.s52.btnonoff",
+      "PropertyInspectorPath": "common/btn-PI/inspector.html"
+    },
+    {
+      "Icon": "actions/pflonoff/assets/pfl-inactive",
+      "Name": "PFL On / Off",
+      "Controllers": ["Keypad"],
+      "DisableAutomaticStates": true,
+      "States": [
+        {
+          "Image": "actions/pflonoff/assets/pfl-active",
+          "Name": "on"
+        },
+        {
+          "Image": "actions/pflonoff/assets/pfl-inactive",
+          "Name": "off"
+        }
+      ],
+      "Tooltip": "Switch PFL On or Off",
+      "UUID": "audio.dhd.s52.pflonoff",
+      "PropertyInspectorPath": "common/btn-PI/inspector.html"
+    },
+    {
+      "Icon": "actions/encoder/assets/hpvol",
+      "Name": "HP 1",
+      "Controllers": ["Encoder"],
+      "DisableAutomaticStates": true,
+      "States": [
+        {
+          "Image": "actions/encoder/assets/hpvol",
+          "Name": "Encoder"
+        }
+      ],
+      "Encoder": {
+        "Icon": "actions/encoder/assets/hpvol",
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Change the volume"
+        }
+      },
+      "Tooltip": "Set headphone 1 encoder",
+      "UUID": "audio.dhd.s52.hp1vol"
+    }
+  ]
+}

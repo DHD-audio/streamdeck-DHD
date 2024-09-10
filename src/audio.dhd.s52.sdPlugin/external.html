@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+  <head>
+    <title>audio.dhd.rm1.externalWindow</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="libs/css/sdpi.css" />
+    <style>
+      body {
+        background-color: transparent;
+      }
+
+      .sdpi-item {
+        max-width: none;
+      }
+
+      .sdpi-heading {
+        margin: 16px 0;
+      }
+
+      ul {
+        max-height: none;
+      }
+      li * {
+        min-height: 18px;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+      }
+      .center-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 16px;
+        margin-bottom: 16px;
+      }
+
+      .wrap {
+        margin: 8px;
+      }
+      .title {
+        font-weight: bold;
+        padding-bottom: 2px;
+        margin-bottom: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        text-transform: uppercase;
+      }
+
+      .wrap {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="sdpi-wrapper">
+      <div class="center-wrapper">
+        <img class="logo" src="assets/rm1-logo.svg" alt="Logo" />
+      </div>
+      <div class="sdpi-heading">Configure RM1</div>
+      <div class="wrap">
+        <p>
+          Here you can configure the connection to your RM1 device. Enter the
+          device IP address or hostname and click save.
+        </p>
+      </div>
+
+      <div class="wrap">
+        <div class="sdpi-item" id="ipAddressWrapper">
+          <div class="sdpi-item-label">IP Address</div>
+          <input
+            type="text"
+            class="sdpi-item-value"
+            id="ipAddress"
+            placeholder="Enter IP address or hostname"
+          />
+        </div>
+
+        <div class="sdpi-item">
+          <div data-localize class="sdpi-item-label" title="DHD Token">
+            DHD Token
+          </div>
+          <input
+            class="sdpi-item-value"
+            id="dhdToken"
+            name="dhd-token"
+            type="text"
+            value=""
+            placeholder="XYZ"
+          />
+        </div>
+
+        <div class="sdpi-item center-wrapper">
+          <button type="button" id="send">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="libs/js/constants.js"></script>
+    <script src="libs/js/prototypes.js"></script>
+    <script src="libs/js/timers.js"></script>
+    <script src="libs/js/utils.js"></script>
+    <script src="libs/js/events.js"></script>
+    <script src="libs/js/api.js"></script>
+    <script src="libs/js/property-inspector.js"></script>
+    <script src="libs/js/dynamic-styles.js"></script>
+
+    <script src="external.js"></script>
+  </body>
+</html>
