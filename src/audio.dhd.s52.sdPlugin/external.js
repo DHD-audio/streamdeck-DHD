@@ -3,7 +3,7 @@ window.addEventListener("message", (event) => {
   if (event.data && event.data.ipAddress) {
     console.log("Received IP address from main window:", event.data.ipAddress);
     document.querySelector("#ipAddress").value = event.data.ipAddress;
-    document.querySelector("#dhdToken").value = event.data.dhdToken;
+    document.querySelector("#dhdToken").value = event.data.token;
   }
 });
 

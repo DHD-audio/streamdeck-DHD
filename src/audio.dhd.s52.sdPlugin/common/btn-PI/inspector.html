@@ -1,54 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta
-          name="viewport"
-          content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui,viewport-fit=cover" />
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui,viewport-fit=cover"
+    />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <title>audio.dhd.s52 Property Inspector</title>
     <link rel="stylesheet" href="../../libs/css/sdpi.css" />
     <style>
-        .center-button {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+      .center-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div class="sdpi-wrapper">
-        
-        <form id="property-inspector">
-            <div class="sdpi-item" id="keyfunctionSelectWrapper">
-                <div class="sdpi-item-label">Channel</div>
-                <select class="sdpi-item-value select" id="keyfunction">
-                    <option value="0">Mic 1</option>
-                    <option value="1">Mic 2</option>
-                    <option value="2">Bluetooth</option>
-                    <option value="3">Aux</option>
-                    <option value="4">Dante 1/2</option>
-                    <option value="5">Dante 3/4</option>
-                    <option value="6">USB Stereo</option>
-                    <option value="7">USB 1/2</option>
-                    <option value="8">USB 3/4</option>
-                    <option value="9">USB 5/6</option>
-                    <option value="10">USB 7/8</option>
-                    <option value="11">USB 9/10</option>
-                    <option value="12">USB 11/12</option>
-                    <option value="13">USB 13/14</option>
-                    <option value="14">USB 15/16</option>
-                </select>
-            </div>
-            
-            <div class="sdpi-item center-button">
-                <button type="button" id="open-external">Configure RM1 Connection</button>
-            </div>
-        </form>
+      <form id="property-inspector">
+        <div class="sdpi-item">
+          <div class="sdpi-item-label">API Path</div>
 
+          <input
+            class="sdpi-item-value"
+            id="path"
+            name="path"
+            type="text"
+            value=""
+            placeholder="/audio/mixers/0/faders/0/on"
+          />
+        </div>
+
+        <div class="sdpi-item center-button">
+          <button type="button" id="open-external">
+            Configure DHD Device Connection
+          </button>
+        </div>
+      </form>
     </div>
 
     <div class="sdpi-info-label hidden" style="top: -1000" value=""></div>
@@ -65,6 +57,5 @@
 
     <!-- Property Inspector Source -->
     <script src="inspector.js"></script>
-</body>
-
+  </body>
 </html>
