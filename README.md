@@ -1,4 +1,3 @@
-
 # Stream Deck Plugin Template
 
 The `Stream Deck Plugin Template` is a template to let you get started quickly when writing a JavaScript plugin for [Stream Deck](https://docs.elgato.com/sdk/). `Stream Deck Plugin Template` requires Stream Deck 6.0 or later.
@@ -7,14 +6,10 @@ The `Stream Deck Plugin Template` is a template to let you get started quickly w
 
 ### app.js
 
-* initialisation of buttons when they appear (match device state)
-* Error handling for websocket couldn't connect
-* Update icon on no connection?
-* Reconnect on close
-
-### property inspector
-
-* Autofill received ip address in external window (postMessage doesnt work for some reason into the window)
+- initialisation of buttons when they appear (match device state)
+- Error handling for websocket couldn't connect
+- Update icon on no connection?
+- Reconnect on close
 
 ## Description
 
@@ -39,7 +34,7 @@ A short guide to help you get started quickly.
 
 ### Clone the repo
 
-```git clone https://github.com/elgatosf/streamdeck-plugin-template```
+`git clone https://github.com/elgatosf/streamdeck-plugin-template`
 
 ### Replace Name
 
@@ -56,31 +51,33 @@ You can either clone the javascript library or add it as a submodule to your rep
 
 #### Clone
 
-```git clone https://github.com/elgatosf/streamdeck-javascript-sdk src/my.domain.plugin-name/libs```
+`git clone https://github.com/elgatosf/streamdeck-javascript-sdk src/my.domain.plugin-name/libs`
 
 #### Add Submodule
 
-```git submodule add https://github.com/elgatosf/streamdeck-javascript-sdk src/my.domain.plugin-name/libs```
+`git submodule add https://github.com/elgatosf/streamdeck-javascript-sdk src/my.domain.plugin-name/libs`
 
 ### Start Coding
 
 You can get started in app.js!
 
 ```javascript
-const myAction = new Action('com.elgato.template.action');
+const myAction = new Action("com.elgato.template.action");
 
 /**
  * The first event fired when Stream Deck starts
  */
-$SD.onConnected(({ actionInfo, appInfo, connection, messageType, port, uuid }) => {
-  console.log('Stream Deck connected!');
-});
+$SD.onConnected(
+  ({ actionInfo, appInfo, connection, messageType, port, uuid }) => {
+    console.log("Stream Deck connected!");
+  },
+);
 
 myAction.onKeyUp(({ action, context, device, event, payload }) => {
-  console.log('Your key code goes here!');
+  console.log("Your key code goes here!");
 });
 
 myAction.onDialRotate(({ action, context, device, event, payload }) => {
-  console.log('Your dial code goes here!');
+  console.log("Your dial code goes here!");
 });
 ```

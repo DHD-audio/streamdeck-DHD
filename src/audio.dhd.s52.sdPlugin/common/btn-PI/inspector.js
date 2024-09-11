@@ -67,19 +67,19 @@ window.sendToInspector = (data) => {
 
 // Open the external window
 document.querySelector("#open-external").addEventListener("click", () => {
-  const externalWindow = window.open("../../external.html");
-  externalWindow.opener = window;
-  if (externalWindow.opener) {
+  const modal = window.open("../../external.html", "DHD Settings");
+  modal.onload = () => {
     console.log(
       "Sending IP address to external window:",
       global_settings.ipAddress,
       global_settings.token,
     );
-    externalWindow.opener.postMessage(
+
+    modal.postMessage(
       { ipAddress: global_settings.ipAddress, token: global_settings.token },
       "*",
     );
-  }
+  };
 });
 // Listen for messages from the external window
 window.addEventListener("message", (event) => {
@@ -99,4 +99,3 @@ window.addEventListener("message", (event) => {
     $PI.setGlobalSettings(globalSettings);
   }
 });
-
