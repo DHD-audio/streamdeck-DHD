@@ -1,6 +1,17 @@
 /// <reference path="libs/js/action.js" />
 /// <reference path="libs/js/stream-deck.js" />
 
+// TODO: show error on action buttons if websocket is not online
+
+/**
+ * ‼️ Each button on the streamdeck has the same `uuid` ("audio.dhd.device.btnonoff") and
+ * a unique `contextKey` (`context`). This means, we create multiple instances via
+ * `mkButtonActionInstance` and manage them in the `instanceRegistry`.
+ * When an event (contains `uuid` and `context`) such as `keyUp` is fired on a particular
+ * action, the function of corresponding instance in the `instanceRegistry` is called.
+ * ⚠️ This delegation is done in `subscribeActionInstances`.
+ */
+
 // bootstrap the streamdeck plugin
 $SD.on("connected", (jsn) => {
   console.log("connected", jsn);
@@ -31,41 +42,16 @@ $SD.on("connected", (jsn) => {
  */
 const instanceRegistry = new Map();
 
-const actionOnOffUuid = "audio.dhd.s52.btnonoff";
-const actionPflUuid = "audio.dhd.s52.pflonoff";
-
-const actionHp1Uuid = "audio.dhd.s52.hp1vol";
-const actionHp2Uuid = "audio.dhd.s52.hp2vol";
-const actionOutUuid = "audio.dhd.s52.outvol";
+const actionUuid = "audio.dhd.s52.btnonoff";
 
 function createActionInstances() {
-  [
-    [actionOnOffUuid, ["on", onActive, onInactive]],
-    [actionPflUuid, ["pfl1", pflActive, pflInactive]],
-  ].forEach(([uuid, args]) => {
-    $SD.on(`${uuid}.willAppear`, (jsn) => {
-      console.group("willAppear");
-      console.log(`Initialize ${actionOnOffUuid}`, jsn);
+  $SD.on(`${actionUuid}.willAppear`, (jsn) => {
+    console.group("willAppear");
+    console.log(`Initialize ${actionUuid}`, jsn);
 
-      mkButtonActionInstance(jsn, ...args).OnWillAppear();
+    mkButtonActionInstance(jsn).OnWillAppear();
 
-      console.groupEnd();
-    });
-  });
-
-  [
-    [actionHp1Uuid, 35],
-    [actionHp2Uuid, 36],
-    [actionOutUuid, 37],
-  ].forEach(([uuid, apiId]) => {
-    $SD.on(`${uuid}.willAppear`, (jsn) => {
-      console.group("willAppear");
-      console.log(`Initialize ${actionOnOffUuid}`, jsn);
-
-      mkPotiActionInstance(jsn, apiId).OnWillAppear();
-
-      console.groupEnd();
-    });
+    console.groupEnd();
   });
 }
 
@@ -78,187 +64,27 @@ function subscribeActionInstances() {
     ["keyUp", "onKeyUp"],
     ["didReceiveSettings", "onDidReceiveSettings"],
   ].forEach(([eventName, callbackName]) => {
-    [actionOnOffUuid, actionPflUuid].forEach((uuid) => {
-      $SD.on(`${uuid}.${eventName}`, (jsn) => {
-        const { context: contextKey } = jsn;
+    $SD.on(`${actionUuid}.${eventName}`, (jsn) => {
+      const { context: contextKey } = jsn;
 
-        const instance = instanceRegistry.get(contextKey);
-        if (!instance) {
-          console.warn(`no instance found for ${contextKey}`);
-          return;
-        }
+      const instance = instanceRegistry.get(contextKey);
+      if (!instance) {
+        console.warn(`no instance found for ${contextKey}`);
+        return;
+      }
 
-        console.group(callbackName, jsn);
-        instance[callbackName](jsn);
-        console.groupEnd();
-      });
+      console.group(callbackName, jsn);
+      instance[callbackName](jsn);
+      console.groupEnd();
     });
-  });
-
-  [
-    ["willDisappear", "onWillDisappear"],
-    ["dialUp", "onDialUp"],
-    ["dialRotate", "onDialRotate"],
-    ["didReceiveSettings", "onDidReceiveSettings"],
-  ].forEach(([eventName, callbackName]) => {
-    [actionHp1Uuid, actionHp2Uuid, actionOutUuid].forEach((uuid) =>
-      $SD.on(`${uuid}.${eventName}`, (jsn) => {
-        const { context: contextKey } = jsn;
-
-        const instance = instanceRegistry.get(contextKey);
-        if (!instance) {
-          console.warn(`no instance found for ${contextKey}`);
-          return;
-        }
-
-        console.group(callbackName, jsn);
-        instance[callbackName](jsn);
-        console.groupEnd();
-      }),
-    );
   });
 }
 
 /**
  * @params {unknown} jsn
- * @params {number} potId
  */
-const mkPotiActionInstance = (jsn, potId) => {
-  const settings = jsn.payload.settings;
-  const { context: contextKey } = jsn;
-
-  // make instance singleton
-  const instance = instanceRegistry.get(contextKey);
-  if (instance) {
-    console.log("Instance already exists");
-    return instance;
-  }
-
-  let indicatorValue = 0;
-
-  const path = () => `audio/pots/${potId}/value`;
-  const getValueFromUpdateResponse = ({ payload }) =>
-    payload.audio?.pots?.[potId]?.value;
-
-  const poti = {
-    /**
-     * Transform negative Control API values to positive equivalents.
-     *
-     * @params {number} num
-     */
-    toIndicator: (num) => {
-      // limit `numg` between -100 and 0
-      num = Math.max(-100, Math.min(0, num));
-
-      return 100 + num;
-    },
-
-    /**
-     * @params {number} num
-     */
-    fromIndicator: (num) => {
-      // limit `numg` between -101 and 100
-      num = Math.max(-1, Math.min(100, num));
-
-      return num - 100;
-    },
-  };
-
-  return {
-    path,
-    getValueFromUpdateResponse,
-
-    /**
-     * Fires when the action appears on the canvas
-     *
-     * Register the instance
-     */
-    OnWillAppear() {
-      instanceRegistry.set(contextKey, this);
-
-      subscribe("add", path(), contextKey);
-    },
-
-    /**
-     * Fires when the action disappears on the canvas
-     *
-     * Unregister the instance
-     */
-    onWillDisappear() {
-      instanceRegistry.delete(contextKey);
-
-      subscribe("remove", path(), contextKey);
-    },
-
-    // callback function to retrieve settings
-    onDidReceiveSettings(jsn) {
-      if (!jsn.payload.settings.keyFunction) {
-        console.error("No keyFunction set in settings");
-        return;
-      }
-
-      subscribe("remove", path(), contextKey);
-
-      console.log("old Key function:", settings.keyFunction);
-      Object.assign(settings, jsn.payload.settings);
-      console.log("new Key function:", settings.keyFunction);
-
-      subscribe("add", path(), jsn.context);
-    },
-
-    onDialRotate(jsn) {
-      const { ticks } = jsn.payload;
-
-      const next = indicatorValue + ticks;
-      indicatorValue = Math.max(-1, Math.min(100, next));
-
-      controlApi.set(path().replace("/value", ""), {
-        value: poti.fromIndicator(indicatorValue),
-      });
-    },
-
-    /**
-     * Fires when pressing the poti
-     * @param {unknown} jsn
-     */
-    onDialUp() {
-      const off = -101;
-      controlApi.set(path().replace("/value", ""), { value: off });
-    },
-
-    /**
-     * Called for every received message from the Control API
-     *
-     * @param {number} value
-     * @param {string} contextKey
-     */
-    updateState(value, contextKey) {
-      console.group(`updateState: ${value}`);
-
-      indicatorValue = poti.toIndicator(value);
-      $SD.setFeedback(contextKey, {
-        indicator: indicatorValue,
-        value: value === -101 ? "OFF" : `${value} dB`,
-      });
-
-      console.groupEnd();
-    },
-  };
-};
-
-/**
- * @params {unknown} jsn
- * @params {string} keyFunctionName
- * @params {string} activeImage
- * @params {string} inactiveImage
- */
-const mkButtonActionInstance = (
-  jsn,
-  keyFunctionName,
-  activeImage,
-  inactiveImage,
-) => {
-  const settings = jsn.payload.settings;
+const mkButtonActionInstance = (jsn) => {
+  let settings = mkSettings(jsn);
   const { context: contextKey } = jsn;
 
   // make instance singleton
@@ -270,14 +96,8 @@ const mkButtonActionInstance = (
 
   let actionState = true;
 
-  const path = () =>
-    `audio/mixers/0/faders/${settings.keyFunction}/${keyFunctionName}`;
-  const getValueFromUpdateResponse = ({ payload }) =>
-    payload.audio.mixers?.[0]?.faders[settings.keyFunction]?.[keyFunctionName];
-
   return {
-    path,
-    getValueFromUpdateResponse,
+    ...settings,
 
     /**
      * Fires when the action appears on the canvas
@@ -287,7 +107,7 @@ const mkButtonActionInstance = (
     OnWillAppear() {
       instanceRegistry.set(contextKey, this);
 
-      subscribe("add", path(), contextKey);
+      subscribe("add", settings.path, contextKey);
     },
 
     /**
@@ -298,23 +118,23 @@ const mkButtonActionInstance = (
     onWillDisappear() {
       instanceRegistry.delete(contextKey);
 
-      subscribe("remove", path(), contextKey);
+      subscribe("remove", settings.path, contextKey);
     },
 
     // callback function to retrieve settings
     onDidReceiveSettings(jsn) {
-      if (!jsn.payload.settings.keyFunction) {
-        console.error("No keyFunction set in settings");
+      if (!jsn.payload.settings.path) {
+        console.error("No path set in settings");
         return;
       }
 
-      subscribe("remove", path(), contextKey);
+      subscribe("remove", settings.path, contextKey);
 
-      console.log("old Key function:", settings.keyFunction);
-      Object.assign(settings, jsn.payload.settings);
-      console.log("new Key function:", settings.keyFunction);
+      console.log("old Key function:", settings.path);
+      settings = mkSettings(jsn);
+      console.log("new Key function:", settings.path);
 
-      subscribe("add", path(), jsn.context);
+      subscribe("add", settings.path, jsn.context);
     },
 
     /**
@@ -323,7 +143,7 @@ const mkButtonActionInstance = (
      */
     onKeyUp() {
       const nextActionState = actionState === true ? false : true;
-      controlApi.set(path(), nextActionState);
+      controlApi.set(settings.path, nextActionState);
     },
 
     /**
@@ -333,19 +153,85 @@ const mkButtonActionInstance = (
      * @param {string} contextKey
      */
     updateState(value, contextKey) {
-      console.group(
-        `updateState -> kf: ${settings.keyFunction} kfN: ${keyFunctionName}`,
-      );
+      console.group(`updateState -> kf: ${settings.path}`);
       actionState = value;
       console.log(`set button to ${actionState} / exchange ${contextKey} icon`);
 
       $SD.setImage(
         contextKey,
-        convertToBase64(actionState ? activeImage : inactiveImage),
+        convertToBase64(
+          actionState ? settings.activeImage : settings.inactiveImage,
+        ),
       );
 
       console.groupEnd();
     },
+  };
+};
+
+/**
+ * Detect type of action: 'pfl' or 'on'
+ *
+ * @params {string} path
+ * @returns {"pfl" | "on"}
+ */
+function detectTypeOfAction(path) {
+  const controlPattern = /^\/?control\/logics\/(\d+)$/;
+  if (controlPattern.test(path)) {
+    return "on";
+  }
+
+  const pflPattern = /pfl\d+$/;
+  if (pflPattern.test(path)) {
+    return "pfl";
+  }
+
+  return "on";
+}
+
+/**
+ * @params {unknonw} jsn
+ */
+const mkSettings = (jsn) => {
+  const path = normalizePath(jsn.payload.settings.path);
+  const action = detectTypeOfAction(path);
+
+  return {
+    /**
+     * @type {string} activeImage
+     */
+    get activeImage() {
+      return action === "on" ? onActive : pflActive;
+    },
+
+    /**
+     * @type {string} inactiveImage
+     */
+    get inactiveImage() {
+      return action === "on" ? onInactive : pflInactive;
+    },
+
+    /**
+     * @params {unknown} payload
+     */
+    getValueFromUpdateResponse(payload) {
+      const lodashPath = path.replaceAll("/", ".");
+      return lodashGet(payload, lodashPath);
+    },
+
+    /**
+     * @example
+     * `/audio/mixers/0/faders/4/on`;
+     * `audio/mixers/0/faders/0/pfl1`;
+     *
+     * `control/logics/35/value`;
+     * `/control/logics/35/value`;
+     *
+     * TODO: `audio/pots/${potId}/value`
+     *
+     * @type {string}
+     */
+    path,
   };
 };
 
@@ -395,7 +281,7 @@ const controlApi = {
   set(path, payload) {
     const message = { method: "set", path, payload };
 
-    console.log(`controlApi: set -> ${path} -> ${message}`);
+    console.log(`controlApi: set -> ${path} ->`, message);
 
     sendMessage(message);
   },
@@ -477,7 +363,7 @@ const controlApi = {
     // the call to `controlApi.subscribe` returns a
     // `{ method: 'update', path: string, payload: unknown }` message type from the Control API
     if (message.method === "update") {
-      return onSubscriptionUpdate(message);
+      return onSubscriptionUpdate(message.payload);
     }
 
     return undefined;
@@ -648,11 +534,12 @@ function connectDevice(ipAddress, token) {
 
       console.log("WebSocket message received:", message);
 
+      message.path = normalizePath(message.path);
       if (controlApi.isUpdateResonse(message)) {
         for (const [contextKey, instance] of instanceRegistry.entries()) {
           const value = controlApi.getValueFromMessage(
             message,
-            instance.path(),
+            instance.path,
             instance.getValueFromUpdateResponse,
           );
 
@@ -664,12 +551,10 @@ function connectDevice(ipAddress, token) {
       }
 
       if (controlApi.isGetResponse(message)) {
-        message.path = normalizePath(message.path);
-
         for (const [contextKey, instance] of instanceRegistry.entries()) {
           const value = controlApi.getValueFromMessage(
             message,
-            instance.path(),
+            instance.path,
             instance.getValueFromUpdateResponse,
           );
 
@@ -735,3 +620,40 @@ function convertToBase64(svgString) {
   // console.log(svgString);
   return "data:image/svg+xml;base64," + btoa(svgString);
 }
+
+/***************************************************************************
+ ****************************************************************************
+ * Lodash
+ ****************************************************************************
+ ***************************************************************************/
+
+/**
+ * Gets the value at `path` of `object`. If the resolved value is
+ * `undefined`, the `defaultValue` is returned in its place.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {*} Returns the resolved value.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.get(object, 'a[0].b.c');
+ * // => 3
+ *
+ * _.get(object, ['a', '0', 'b', 'c']);
+ * // => 3
+ *
+ * _.get(object, 'a.b.c', 'default');
+ * // => 'default'
+ *
+ *
+ * `get` is defined in `lodash.get.js`
+ * @docs https://lodash.com/docs/4.17.15#get
+ */
+const lodashGet = get;

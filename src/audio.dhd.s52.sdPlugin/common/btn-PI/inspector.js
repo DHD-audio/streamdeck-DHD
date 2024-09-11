@@ -12,13 +12,13 @@ $PI.onConnected((jsn) => {
   console.log(jsn.actionInfo.payload.settings);
 
   settings = jsn.actionInfo.payload.settings;
-  if (settings.keyFunction) {
-    document.querySelector("#keyfunction").value = settings.keyFunction;
+  if (settings.path) {
+    document.querySelector("#path").value = settings.path;
   } else {
-    document.querySelector("#keyfunction").value = "0";
+    document.querySelector("#path").value = "/audio/mixers/0/faders/0/on";
 
     const payload = {
-      keyFunction: 1,
+      path: "/audio/mixers/0/faders/0/on",
     };
 
     $PI.setSettings(payload);
@@ -40,12 +40,12 @@ $PI.onConnected((jsn) => {
   $PI.getGlobalSettings();
 });
 
-document.querySelector("#keyfunction").addEventListener("change", (event) => {
-  const selectedValue = event.target.value;
-  console.log("Selected key function:", selectedValue);
+document.querySelector("#path").addEventListener("keyup", (event) => {
+  const { value } = event.target;
+  console.log("Selected path:", value);
 
   const payload = {
-    keyFunction: selectedValue,
+    path: value,
   };
 
   $PI.setSettings(payload);

@@ -1,9 +1,9 @@
 {
-  "Description": "RM1 Stream Deck Plugin", 
-  "Name": "RM1", 
-  "Category": "Templates", 
+  "Description": "RM1 Stream Deck Plugin",
+  "Name": "RM1",
+  "Category": "Templates",
   "com.elgato.template.action": {
-    "Name": "Action", 
+    "Name": "Action",
     "Tooltip": "This is the only action in this plugin"
   },
   "Localization": {
