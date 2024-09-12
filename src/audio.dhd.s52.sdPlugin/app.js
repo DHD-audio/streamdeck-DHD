@@ -337,18 +337,13 @@ const controlApi = {
   getValueFromMessage(message, path, onSubscriptionUpdate) {
     // the call to `controlApi.get` returns a
     // `{ method: 'get', path: string, payload: boolean | string | number }` message type from the Control API
-    // TODO: remove
-    console.log("getValueFromMessage -> ", path, message);
     if (["get", "set"].includes(message.method)) {
       if (message.success === false) {
-        // TODO: show alert
         console.error(`error while getting ${path} ->`, message.error);
         return undefined;
       }
 
       if (message.path === path) {
-        // TODO: remove
-        console.log("getValueFromMessage -> ", message.payload);
         return message.payload;
       }
 
