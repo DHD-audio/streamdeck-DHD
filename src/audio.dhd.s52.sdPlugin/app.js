@@ -54,7 +54,7 @@ function createActionInstances() {
     console.group("willAppear");
     console.log(`Initialize ${actionUuid}`, jsn);
 
-    mkButtonActionInstance(jsn).OnWillAppear();
+    mkButtonActionInstance(jsn).onWillAppear();
 
     console.groupEnd();
   });
@@ -109,7 +109,7 @@ const mkButtonActionInstance = (jsn) => {
      *
      * Register the instance
      */
-    OnWillAppear() {
+    onWillAppear() {
       instanceRegistry.set(contextKey, this);
 
       subscribe("add", settings.path, contextKey);
