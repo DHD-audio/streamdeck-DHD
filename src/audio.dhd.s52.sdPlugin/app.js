@@ -1,18 +1,23 @@
 /// <reference path="libs/js/action.js" />
 /// <reference path="libs/js/stream-deck.js" />
 
-// TODO: show error on action buttons if websocket is not online
-
 /**
- * ‼️ Each button on the streamdeck has the same `uuid` ("audio.dhd.device.btnonoff") and
- * a unique `contextKey` (`context`). This means, we create multiple instances via
+ * Streamdeck Plugin for DHD Control API
+ *
+ * ‼️ Each action button on the streamdeck has the same `uuid` ("audio.dhd.device.btnonoff")
+ * and a unique `contextKey` (`context`). This means, we create multiple instances via
  * `mkButtonActionInstance` and manage them in the `instanceRegistry`.
  * When an event (contains `uuid` and `context`) such as `keyUp` is fired on a particular
  * action, the function of corresponding instance in the `instanceRegistry` is called.
  * ⚠️ This delegation is done in `subscribeActionInstances`.
+ *
+ * TODO: show error on action buttons if websocket is not online
+ * TODO: add support for `audio/pots/${potId}/value` path
  */
 
-// bootstrap the streamdeck plugin
+/**
+ * bootstrap the streamdeck plugin
+ */
 $SD.on("connected", (jsn) => {
   console.log("connected", jsn);
 
@@ -226,8 +231,6 @@ const mkSettings = (jsn) => {
      *
      * `control/logics/35/value`;
      * `/control/logics/35/value`;
-     *
-     * TODO: `audio/pots/${potId}/value`
      *
      * @type {string}
      */
