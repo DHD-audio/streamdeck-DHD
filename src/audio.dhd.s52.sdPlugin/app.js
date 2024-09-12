@@ -86,10 +86,9 @@ function subscribeActionInstances() {
 }
 
 /**
- * @params {unknown} jsn
+ * @param {unknown} jsn
  */
 const mkButtonActionInstance = (jsn) => {
-  let settings = mkSettings(jsn);
   const { context: contextKey } = jsn;
 
   // make instance singleton
@@ -99,10 +98,40 @@ const mkButtonActionInstance = (jsn) => {
     return instance;
   }
 
+  let path = normalizePath(jsn.payload.settings.path);
+  let action = detectTypeOfAction(path);
   let actionState = true;
 
   return {
-    ...settings,
+    /**
+     * The data path that is addressed by the action
+     */
+    get path() {
+      return path;
+    },
+
+    /**
+     * @returns {string}
+     */
+    get activeImage() {
+      return action === "on" ? onActive : pflActive;
+    },
+
+    /**
+     * @returns {string}
+     */
+    get inactiveImage() {
+      return action === "on" ? onInactive : pflInactive;
+    },
+
+    /**
+     * @param {Object} payload - The message payload to query the value from
+     * @returns {unknown} Returns the resolved value.
+     */
+    getValueFromUpdateResponse(payload) {
+      const lodashPath = path.replaceAll("/", ".");
+      return lodashGet(payload, lodashPath);
+    },
 
     /**
      * Fires when the action appears on the canvas
@@ -112,7 +141,7 @@ const mkButtonActionInstance = (jsn) => {
     onWillAppear() {
       instanceRegistry.set(contextKey, this);
 
-      subscribe("add", settings.path, contextKey);
+      subscribe("add", path, contextKey);
     },
 
     /**
@@ -123,7 +152,7 @@ const mkButtonActionInstance = (jsn) => {
     onWillDisappear() {
       instanceRegistry.delete(contextKey);
 
-      subscribe("remove", settings.path, contextKey);
+      subscribe("remove", path, contextKey);
     },
 
     // callback function to retrieve settings
@@ -133,13 +162,14 @@ const mkButtonActionInstance = (jsn) => {
         return;
       }
 
-      subscribe("remove", settings.path, contextKey);
+      subscribe("remove", path, contextKey);
 
-      console.log("old Key function:", settings.path);
-      settings = mkSettings(jsn);
-      console.log("new Key function:", settings.path);
+      console.log("old path ->", path);
+      path = normalizePath(jsn.payload.settings.path);
+      action = detectTypeOfAction(path);
+      console.log("new path ->", path);
 
-      subscribe("add", settings.path, jsn.context);
+      subscribe("add", path, jsn.context);
     },
 
     /**
@@ -148,25 +178,22 @@ const mkButtonActionInstance = (jsn) => {
      */
     onKeyUp() {
       const nextActionState = actionState === true ? false : true;
-      controlApi.set(settings.path, nextActionState);
+      controlApi.set(path, nextActionState);
     },
 
     /**
      * Called for every received message from the Control API
      *
      * @param {boolean} value
-     * @param {string} contextKey
      */
-    updateState(value, contextKey) {
-      console.group(`updateState -> kf: ${settings.path}`);
+    updateState(value) {
+      console.group(`updateState -> kf: ${path}`);
       actionState = value;
       console.log(`set button to ${actionState} / exchange ${contextKey} icon`);
 
       $SD.setImage(
         contextKey,
-        convertToBase64(
-          actionState ? settings.activeImage : settings.inactiveImage,
-        ),
+        convertToBase64(actionState ? this.activeImage : this.inactiveImage),
       );
 
       console.groupEnd();
@@ -177,7 +204,7 @@ const mkButtonActionInstance = (jsn) => {
 /**
  * Detect type of action: 'pfl' or 'on'
  *
- * @params {string} path
+ * @param {string} path
  * @returns {"pfl" | "on"}
  */
 function detectTypeOfAction(path) {
@@ -193,50 +220,6 @@ function detectTypeOfAction(path) {
 
   return "on";
 }
-
-/**
- * @params {unknonw} jsn
- */
-const mkSettings = (jsn) => {
-  const path = normalizePath(jsn.payload.settings.path);
-  const action = detectTypeOfAction(path);
-
-  return {
-    /**
-     * @type {string} activeImage
-     */
-    get activeImage() {
-      return action === "on" ? onActive : pflActive;
-    },
-
-    /**
-     * @type {string} inactiveImage
-     */
-    get inactiveImage() {
-      return action === "on" ? onInactive : pflInactive;
-    },
-
-    /**
-     * @params {unknown} payload
-     */
-    getValueFromUpdateResponse(payload) {
-      const lodashPath = path.replaceAll("/", ".");
-      return lodashGet(payload, lodashPath);
-    },
-
-    /**
-     * @example
-     * `/audio/mixers/0/faders/4/on`;
-     * `audio/mixers/0/faders/0/pfl1`;
-     *
-     * `control/logics/35/value`;
-     * `/control/logics/35/value`;
-     *
-     * @type {string}
-     */
-    path,
-  };
-};
 
 /***************************************************************************
  ****************************************************************************
@@ -265,7 +248,7 @@ const controlApi = {
   /**
    * Query a node or value (single time)
    *
-   * @param {string} path - the data path you are addressing
+   * @param {string} path - the addressing data path
    */
   get(path) {
     const message = { method: "get", path };
@@ -278,7 +261,7 @@ const controlApi = {
   /**
    * Set one or multiple values Request (single value):
    *
-   * @param {string} path - the data path you are addressing
+   * @param {string} path - the addressing data path
    * @param {unknown} payload -  the update data. Can be object, array or single value.
    */
   set(path, payload) {
@@ -293,7 +276,7 @@ const controlApi = {
    * To receive updates for changed values and avoid polling, use subscribe method.
    * Subscribe to a node (e.g. level detect 0):
    *
-   * @param {string} path - the data path you are addressing
+   * @param {string} path - the addressing data path
    */
   subscribe(path) {
     const message = { method: "subscribe", path };
@@ -354,8 +337,18 @@ const controlApi = {
   getValueFromMessage(message, path, onSubscriptionUpdate) {
     // the call to `controlApi.get` returns a
     // `{ method: 'get', path: string, payload: boolean | string | number }` message type from the Control API
-    if (message.method === "get") {
+    // TODO: remove
+    console.log("getValueFromMessage -> ", path, message);
+    if (["get", "set"].includes(message.method)) {
+      if (message.success === false) {
+        // TODO: show alert
+        console.error(`error while getting ${path} ->`, message.error);
+        return undefined;
+      }
+
       if (message.path === path) {
+        // TODO: remove
+        console.log("getValueFromMessage -> ", message.payload);
         return message.payload;
       }
 
@@ -539,7 +532,7 @@ function connectDevice(ipAddress, token) {
 
       message.path = normalizePath(message.path);
       if (controlApi.isUpdateResonse(message)) {
-        for (const [contextKey, instance] of instanceRegistry.entries()) {
+        for (const instance of instanceRegistry.values()) {
           const value = controlApi.getValueFromMessage(
             message,
             instance.path,
@@ -547,14 +540,17 @@ function connectDevice(ipAddress, token) {
           );
 
           if (value !== undefined) {
-            instance.updateState(value, contextKey);
+            instance.updateState(value);
           }
         }
         return;
       }
 
-      if (controlApi.isGetResponse(message)) {
-        for (const [contextKey, instance] of instanceRegistry.entries()) {
+      if (
+        controlApi.isGetResponse(message) ||
+        controlApi.isSetResponse(message)
+      ) {
+        for (const instance of instanceRegistry.values()) {
           const value = controlApi.getValueFromMessage(
             message,
             instance.path,
@@ -562,7 +558,7 @@ function connectDevice(ipAddress, token) {
           );
 
           if (value !== undefined) {
-            instance.updateState(value, contextKey);
+            instance.updateState(value);
           }
         }
 
@@ -635,13 +631,11 @@ function convertToBase64(svgString) {
  * `undefined`, the `defaultValue` is returned in its place.
  *
  * @static
- * @memberOf _
  * @since 3.7.0
- * @category Object
  * @param {Object} object The object to query.
  * @param {Array|string} path The path of the property to get.
- * @param {*} [defaultValue] The value returned for `undefined` resolved values.
- * @returns {*} Returns the resolved value.
+ * @param {unknown} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {unknown} Returns the resolved value.
  * @example
  *
  * var object = { 'a': [{ 'b': { 'c': 3 } }] };
