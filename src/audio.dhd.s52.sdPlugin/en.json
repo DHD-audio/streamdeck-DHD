@@ -1,20 +1,11 @@
 {
-  "Description": "RM1 Stream Deck Plugin",
-  "Name": "RM1",
-  "Category": "Templates",
-  "com.elgato.template.action": {
+  "Description": "DHD Stream Deck Plugin",
+  "Name": "DHD",
+  "Category": "Remote Control",
+  "audio.dhd.s52.btnonoff": {
     "Name": "Action",
-    "Tooltip": "This is the only action in this plugin"
+    "Tooltip": "Generic bool operation"
   },
   "Localization": {
-    "More info": "More info",
-    "Message": "Message",
-    "Click Me": "Click Me",
-    "Button": "Button",
-    "More": "More",
-    "My name": "My name",
-    "My title": "My title",
-    "My message": "My message",
-    "My button": "My button"
   }
 }
