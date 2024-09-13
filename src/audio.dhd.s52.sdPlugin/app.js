@@ -343,7 +343,8 @@ const controlApi = {
         return undefined;
       }
 
-      if (message.path === path) {
+      const messagePath = normalizePath(message.path);
+      if (messagePath === path) {
         return message.payload;
       }
 
@@ -525,7 +526,6 @@ function connectDevice(ipAddress, token) {
 
       console.log("WebSocket message received:", message);
 
-      message.path = normalizePath(message.path);
       if (controlApi.isUpdateResonse(message)) {
         for (const instance of instanceRegistry.values()) {
           const value = controlApi.getValueFromMessage(
