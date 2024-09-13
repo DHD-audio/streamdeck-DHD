@@ -125,15 +125,6 @@ const mkButtonActionInstance = (jsn) => {
     },
 
     /**
-     * @param {Object} payload - The message payload to query the value from
-     * @returns {unknown} Returns the resolved value.
-     */
-    getValueFromUpdateResponse(payload) {
-      const lodashPath = path.replaceAll("/", ".");
-      return lodashGet(payload, lodashPath);
-    },
-
-    /**
      * Fires when the action appears on the canvas
      *
      * Register the instance
@@ -328,13 +319,18 @@ const controlApi = {
   },
 
   /**
-   * Method extract payload from `get` and `subscribe` message types.
+   * Method extract value from `get`, `set` and `subscribe` message types.
    *
-   * @param {unknown} message
-   * @param {string} path
-   * @param {(message: unknown) => unknown} onSubscriptionUpdate
+   * @param {unknown} message - the raw websocket message
+   * @param {string} path - the path of the streamdeck action instance
    */
-  getValueFromMessage(message, path, onSubscriptionUpdate) {
+  getValueFromMessage(message, path) {
+    // the call to `controlApi.subscribe` returns a
+    // `{ method: 'update', path: string, payload: unknown }` message type from the Control API
+    if (message.method === "update") {
+      return lodashGet(message.payload, path);
+    }
+
     // the call to `controlApi.get` returns a
     // `{ method: 'get', path: string, payload: boolean | string | number }` message type from the Control API
     if (["get", "set"].includes(message.method)) {
@@ -350,12 +346,6 @@ const controlApi = {
 
       // the message was for another recipient
       return undefined;
-    }
-
-    // the call to `controlApi.subscribe` returns a
-    // `{ method: 'update', path: string, payload: unknown }` message type from the Control API
-    if (message.method === "update") {
-      return onSubscriptionUpdate(message.payload);
     }
 
     return undefined;
@@ -528,16 +518,13 @@ function connectDevice(ipAddress, token) {
 
       if (controlApi.isUpdateResonse(message)) {
         for (const instance of instanceRegistry.values()) {
-          const value = controlApi.getValueFromMessage(
-            message,
-            instance.path,
-            instance.getValueFromUpdateResponse,
-          );
+          const value = controlApi.getValueFromMessage(message, instance.path);
 
           if (value !== undefined) {
             instance.updateState(value);
           }
         }
+
         return;
       }
 
@@ -546,11 +533,7 @@ function connectDevice(ipAddress, token) {
         controlApi.isSetResponse(message)
       ) {
         for (const instance of instanceRegistry.values()) {
-          const value = controlApi.getValueFromMessage(
-            message,
-            instance.path,
-            instance.getValueFromUpdateResponse,
-          );
+          const value = controlApi.getValueFromMessage(message, instance.path);
 
           if (value !== undefined) {
             instance.updateState(value);
@@ -648,4 +631,7 @@ function convertToBase64(svgString) {
  * `get` is defined in `lodash.get.js`
  * @docs https://lodash.com/docs/4.17.15#get
  */
-const lodashGet = get;
+const lodashGet = (object, path) => {
+  const lodashPath = path.replaceAll("/", ".");
+  return get(object, lodashPath);
+};
