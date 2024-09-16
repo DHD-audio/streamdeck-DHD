@@ -21,6 +21,10 @@ Supported actions are:
 
 FIXME
 
+## DHD Control API
+
+Control API documentation is available at the [DHD developer portal](https://developer.dhd.audio/).
+
 ## Contributing
 
 Follow the documentation of the [Stream Deck SDK](https://docs.elgato.com/sdk/) to get started developing the plugin. Then clone the repository to your machine and install the required streamdeck library submodule using `git submodule update --init --recursive`.
