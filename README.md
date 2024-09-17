@@ -2,21 +2,25 @@
 
 A Stream Deck Plugin to control Devices by DHD audio. It uses DHD's control API via WebSocket.
 
-It also serves as a code sample for developers interested in implementing DHD's control API.
+It also serves as a code sample for developers interested in implementing DHD's control API. 
+**Control API requires DHD XC3/XD3/X3 IP Cores with a minimum firmware version 10.3**.
 
 ## Supported Actions
 
-Supported actions are:
+Supported actions are all boolean values that are `true` or `false`. For example:
 
 - Channel On/Off
 - PFL On/Off
-- HP1/HP2/Out volume on encoder (SD+)
+- Set logic function values
+- and more.
 
 ## Get started
 
 - Install the plugin.
 - Configure any action and click the 'Configure DHD Connection'.
-- Enter the DHD Device hostname or IP address and click save. The values are globally stored for each action.
+- Enter the DHD Device hostname or IP address as well as the Token created in system app and click save. The values are globally stored for each action.
+- Back at the action, enter the exact path of the value according to the control api syntax, e.g. `/audio/mixers/0/faders/0/on`. See [DHD developer portal](https://developer.dhd.audio/) for more information.
+- If the action detects a `pfl1` path, the icon will be exchanged by a `PFL` icon.
 
 ## How it works
 
