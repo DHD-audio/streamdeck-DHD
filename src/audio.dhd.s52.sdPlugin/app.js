@@ -4,19 +4,12 @@
 /**
  * Streamdeck Plugin for DHD Control API
  *
- * ‼️ Each action button on the streamdeck has the same `uuid` ("audio.dhd.device.btnonoff")
- * and a unique `contextKey` (`context`). This means, we create multiple instances via
- * `mkButtonActionInstance` and manage them in the `instanceRegistry`.
- * When an event (contains `uuid` and `context`) such as `keyUp` is fired on a particular
- * action, the function of corresponding instance in the `instanceRegistry` is called.
- * ⚠️ This delegation is done in `subscribeActionInstances`.
- *
  * TODO: show error on action buttons if websocket is not online
  * TODO: add support for `audio/pots/${potId}/value` path
  */
 
 /**
- * bootstrap the streamdeck plugin
+ * bootstrap the DHD plugin
  */
 $SD.on("connected", (jsn) => {
   console.log("connected", jsn);
@@ -38,14 +31,14 @@ $SD.on("connected", (jsn) => {
 
 /***************************************************************************
  ****************************************************************************
- * Streamdeck Action Plugins
+ * Streamdeck DHD plugin
  ****************************************************************************
  ***************************************************************************/
 
 /**
  * @type {Map<string, Record<string, (...args: unknown[]) => unknown>>}
  */
-const instanceRegistry = new Map();
+const actionInstanceRegistry = new Map();
 
 const actionUuid = "audio.dhd.s52.btnonoff";
 
@@ -54,14 +47,16 @@ function createActionInstances() {
     console.group("willAppear");
     console.log(`Initialize ${actionUuid}`, jsn);
 
-    mkButtonActionInstance(jsn).onWillAppear();
+    mkActionInstance(jsn).onWillAppear();
 
     console.groupEnd();
   });
 }
 
 /**
- * Subscribe instance to events
+ * Event Broker
+ *
+ * Delegate events to instances
  */
 function subscribeActionInstances() {
   [
@@ -72,7 +67,7 @@ function subscribeActionInstances() {
     $SD.on(`${actionUuid}.${eventName}`, (jsn) => {
       const { context: contextKey } = jsn;
 
-      const instance = instanceRegistry.get(contextKey);
+      const instance = actionInstanceRegistry.get(contextKey);
       if (!instance) {
         console.warn(`no instance found for ${contextKey}`);
         return;
@@ -86,13 +81,15 @@ function subscribeActionInstances() {
 }
 
 /**
+ * Represents a single action instance and its context
+ *
  * @param {unknown} jsn
  */
-const mkButtonActionInstance = (jsn) => {
+const mkActionInstance = (jsn) => {
   const { context: contextKey } = jsn;
 
   // make instance singleton
-  const instance = instanceRegistry.get(contextKey);
+  const instance = actionInstanceRegistry.get(contextKey);
   if (instance) {
     console.log("Instance already exists");
     return instance;
@@ -130,7 +127,7 @@ const mkButtonActionInstance = (jsn) => {
      * Register the instance
      */
     onWillAppear() {
-      instanceRegistry.set(contextKey, this);
+      actionInstanceRegistry.set(contextKey, this);
 
       subscribe("add", path, contextKey);
     },
@@ -141,7 +138,7 @@ const mkButtonActionInstance = (jsn) => {
      * Unregister the instance
      */
     onWillDisappear() {
-      instanceRegistry.delete(contextKey);
+      actionInstanceRegistry.delete(contextKey);
 
       subscribe("remove", path, contextKey);
     },
@@ -219,6 +216,8 @@ function detectTypeOfAction(path) {
  ***************************************************************************/
 
 /**
+ * Control API helper object to send messages to the DHD Device
+ *
  * @url https://developer.dhd.audio/docs/API/control-api/socket-usage#methods
  */
 const controlApi = {
@@ -383,8 +382,6 @@ function subscribe(method, path, context) {
         subscribePaths.get(path).push(context);
       }
 
-      console.log(subscribePaths);
-
       // for new subscriptions -> subscribe to the Control API
       if (!subscriptionExists) {
         controlApi.subscribe(path);
@@ -517,7 +514,7 @@ function connectDevice(ipAddress, token) {
       console.log("WebSocket message received:", message);
 
       if (controlApi.isUpdateResonse(message)) {
-        for (const instance of instanceRegistry.values()) {
+        for (const instance of actionInstanceRegistry.values()) {
           const value = controlApi.getValueFromMessage(message, instance.path);
 
           if (value !== undefined) {
@@ -532,7 +529,7 @@ function connectDevice(ipAddress, token) {
         controlApi.isGetResponse(message) ||
         controlApi.isSetResponse(message)
       ) {
-        for (const instance of instanceRegistry.values()) {
+        for (const instance of actionInstanceRegistry.values()) {
           const value = controlApi.getValueFromMessage(message, instance.path);
 
           if (value !== undefined) {
