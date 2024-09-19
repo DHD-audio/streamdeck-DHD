@@ -5,7 +5,7 @@
   "Description": "Control your DHD console with Stream Deck",
   "Name": "DHD Stream Deck",
   "Icon": "assets/manifest",
-  "URL": "https://dhd.audio/",
+  "URL": "https://github.com/DHD-audio/streamdeck-DHD",
   "Version": "1.0.0",
   "Software": {
     "MinimumVersion": "5.0"
