@@ -1,5 +1,5 @@
 {
-  "Description": "DHD Stream Deck Plugin",
+  "Description": "Control your DHD console with this Stream Deck plugin.",
   "Name": "DHD",
   "Category": "Remote Control",
   "audio.dhd.s52.btnonoff": {

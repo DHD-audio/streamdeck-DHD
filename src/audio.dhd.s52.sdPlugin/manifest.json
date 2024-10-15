@@ -2,9 +2,9 @@
   "SDKVersion": 2,
   "Author": "DHD audio GmbH",
   "CodePath": "app.html",
-  "Description": "Control your DHD console with Stream Deck",
+  "Description": "Control your DHD console with this Stream Deck plugin.",
   "Name": "DHD Stream Deck",
-  "Icon": "assets/manifest",
+  "Icon": "assets/plugin-icon",
   "URL": "https://github.com/DHD-audio/streamdeck-DHD",
   "Version": "1.0.0",
   "Software": {
@@ -21,10 +21,10 @@
     }
   ],
   "Category": "DHD Control",
-  "CategoryIcon": "assets/manifest",
+  "CategoryIcon": "assets/plugin-icon",
   "Actions": [
     {
-      "Icon": "actions/btnonoff/assets/On-inactive",
+      "Icon": "actions/btnonoff/assets/action-icon",
       "Name": "DHD Control API",
       "Controllers": ["Keypad"],
       "DisableAutomaticStates": true,
